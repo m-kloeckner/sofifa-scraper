@@ -31,7 +31,7 @@ ROBOTSTXT_OBEY = False
 # CONCURRENT_REQUESTS_PER_IP = 16
 
 # Disable cookies (enabled by default)
-# COOKIES_ENABLED = False
+COOKIES_ENABLED = False
 
 # Disable Telnet Console (enabled by default)
 # TELNETCONSOLE_ENABLED = False
@@ -50,8 +50,8 @@ ROBOTSTXT_OBEY = False
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-# DOWNLOADER_MIDDLEWARES = {
-#    'sofifa.middlewares.SofifaDownloaderMiddleware': 543,
+#DOWNLOADER_MIDDLEWARES = {
+#    'sofifa.middlewares.AntiBanMiddleware': 543,
 # }
 
 # Enable or disable extensions
@@ -86,3 +86,7 @@ AUTOTHROTTLE_TARGET_CONCURRENCY = 1.0
 # HTTPCACHE_DIR = 'httpcache'
 # HTTPCACHE_IGNORE_HTTP_CODES = []
 # HTTPCACHE_STORAGE = 'scrapy.extensions.httpcache.FilesystemCacheStorage'
+REQUEST_FINGERPRINTER_IMPLEMENTATION = '2.7'
+DOWNLOAD_DELAY = 10
+#HTTPERROR_ALLOWED_CODES = [200]
+USER_AGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:100.0) Gecko/20100101 Firefox/100.0"
