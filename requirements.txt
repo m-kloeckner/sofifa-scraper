@@ -1,1 +1,2 @@
-Scrapy==2.9.0
+scrapy==2.11.1
+cloudscraper==1.2.71
