@@ -6,7 +6,7 @@ By [Daniele Solombrino](https://github.com/dansolombrino) and [Davide Quaranta](
 
 ## Requirements
 
-Only Scrapy 2.6.1
+scrapy 2.11.1
 
 ## Usage
 
@@ -18,22 +18,17 @@ scrapy crawl sofifa
 To save the output as CSV:
 
 ```shell
-scrapy crawl sofifa -o out.csv -t csv -a
+scrapy crawl sofifa -o out.csv:csv -a
 ```
 
-To set a specific year to scrape:
+To set a specific FIFA version to scrape:
 
 ```shell
-scrapy crawl sofifa -o out.csv -t csv -a year=13
+scrapy crawl sofifa -o out.csv:csv -a fifa_version=230002
 ```
 
-### Extending the scraper with custom years
+### Finding the FIFA version to scrape
 
-To scape other years than the currently supported ones, it is needed to:
-
-1. Find the "year key" that SoFIFA uses to identity a date.
-2. Add the key to [the `YEAR_KEYS` dictionary in the utils file](src/sofifa/spiders/utils.py).
-
-Finding the year key is simple: just go to the players page on SoFIFA and select an year/date, then note in the `?r=x` value in the URL. For example, `?r=220019` refers to Dec 9 2021 (FIFA 22).
+Finding the FIFA version key is simple: just go to the players page on SoFIFA and select an year/date, then note in the `?r=x` value in the URL. For example, `?r=220019` refers to Dec 9 2021 (FIFA 22).
 
 **Note** that across different FIFA versions, players' fields may be different, hence it may be needed to manually change the fields to scrape.
