@@ -1,7 +1,8 @@
 import scrapy
-from .utils import *
 from scrapy.utils.project import get_project_settings
 import requests
+import json
+from .utils import *
 
 
 class SofifaSpider(scrapy.Spider):
@@ -25,39 +26,43 @@ class SofifaSpider(scrapy.Spider):
         yield request
 
     def parse(self, response):
-        props_headers = response.css("table thead tr th ::text").extract()[6:]
-        props_headers = list(map(clean_string, [_ for _ in props_headers]))
-
-        if self.remap_columns:
-            props_headers = rename_columns(props_headers)
 
         for player in response.css("table > tbody > tr"):
             club_name = player.css("td:nth-child(6) a::text").get()
             team_url = player.css("td:nth-child(6) a::attr(href)").get()
+            player_url = player.css("td:nth-child(2) a::attr(href)").get()
 
             if club_name is None or str.isdecimal(club_name):
                 # skip fake players or players that do not play in any club
                 self.logger.info(f"Skipping fake player.")
                 continue
 
-            item = {
+            item = dict()
+
+            # get player ids and version
+            player_ids = {
                 "sofifa_id": player.css("td:nth-child(7)::text").get(),
                 "fifa_version": self.fifa_version,
-                "player_url": player.css("td:nth-child(2) a::attr(href)").get(),
-                "name": player.css("td:nth-child(2) a::attr(data-tippy-content)").get(),
-                "age": player.css("td:nth-child(3)::text").get(),
-                "nationality": player.css(
-                    "td:nth-child(2) img.flag::attr(title)"
-                ).get(),
-                "club_name": player.css("td:nth-child(6) a::text").get(),
-                "league_name": self.parse_team(team_url),
+            }
+            item.update(player_ids)
+
+            # get player details from player page
+            item.update(self.parse_player_details(player_url))
+
+            # get player data placed in the first columns of player search
+            more_player_data = {
                 "player_positions": [player.css("td:nth-child(2) span::text").get()],
                 "potential": player.css("td:nth-child(5) em::text").get(),
                 "overall_rating": player.css("td:nth-child(4) em::text").get()
             }
+            item.update(more_player_data)
 
+            # get the remaining columns of player search
+            props_headers = response.css("table thead tr th ::text").extract()[6:]
+            props_headers = list(map(clean_string, [_ for _ in props_headers]))
+            if self.remap_columns:
+                props_headers = rename_columns(props_headers)
             props_values = []
-
             for p in player.css("td")[7:]:
                 value = p.css(" ::text").get()
                 if value is None:
@@ -94,3 +99,50 @@ class SofifaSpider(scrapy.Spider):
 
         self.teams_cache[team_url] = league_name
         return league_name
+    
+    def parse_player_details(self, player_url):
+
+        cookies = {"r": self.fifa_version}
+        settings = get_project_settings()
+        headers = {
+            "User-Agent": settings.get('USER_AGENT')
+        }
+
+        req = requests.get(
+            SITE_BASE_URL + player_url,
+            cookies=cookies,
+            headers=headers,
+        )
+
+        resp = scrapy.Selector(req)
+
+        # get player profile json
+        player_profile = json.loads(resp.xpath('//head/script[contains(text(), "birthDate")]/text()').get())
+        player_details = {
+            "given_name": player_profile['givenName'],
+            "family_name": player_profile['familyName'],
+            "birth_date": player_profile['birthDate'],
+            "image": player_profile['image'],
+            "club_name": player_profile['affiliation'],
+            "height": player_profile['height'],
+            "weight": player_profile['weight'],
+            "height": player_profile['nationality']
+        }
+
+        # get league, kit & current position
+        more_player_data = {
+            
+        }
+
+        # get lineup strengths
+        props_headers = resp.css("div.lineup div div.pos::text").extract()
+        props_headers = list(map(clean_string, [_ for _ in props_headers]))
+        props_values = []
+        for p in resp.css("div.lineup div div.pos"):
+            value = p.css(" em::text").get()
+            if value is None:
+                value = ""
+            props_values.append(value.strip())
+        player_details.update(dict(zip(props_headers, props_values)))
+
+        return player_details
