@@ -43,6 +43,9 @@ class SofifaSpider(scrapy.Spider):
             player_ids = {
                 "sofifa_id": player.css("td:nth-child(7)::text").get(),
                 "fifa_version": self.fifa_version,
+                "sofifa_club_id": team_url.split('/')[2],
+                "club_name": club_name,
+                "league": self.parse_team(team_url),
             }
             item.update(player_ids)
 
@@ -58,12 +61,12 @@ class SofifaSpider(scrapy.Spider):
             item.update(more_player_data)
 
             # get the remaining columns of player search
-            props_headers = response.css("table thead tr th ::text").extract()[6:]
+            props_headers = response.css("table thead tr th ::text").extract()[8:]
             props_headers = list(map(clean_string, [_ for _ in props_headers]))
             if self.remap_columns:
                 props_headers = rename_columns(props_headers)
             props_values = []
-            for p in player.css("td")[7:]:
+            for p in player.css("td")[9:]:
                 value = p.css(" ::text").get()
                 if value is None:
                     value = ""
@@ -123,15 +126,9 @@ class SofifaSpider(scrapy.Spider):
             "family_name": player_profile['familyName'],
             "birth_date": player_profile['birthDate'],
             "image": player_profile['image'],
-            "club_name": player_profile['affiliation'],
             "height": player_profile['height'],
             "weight": player_profile['weight'],
-            "height": player_profile['nationality']
-        }
-
-        # get league, kit & current position
-        more_player_data = {
-            
+            "nationality": player_profile['nationality']
         }
 
         # get lineup strengths
