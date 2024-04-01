@@ -15,7 +15,6 @@ class SofifaSpider(scrapy.Spider):
         self.fifa_version = fifa_version
         self.remap_columns = remap_columns.lower() in ("true", "yes", "y", "1")
         self.start_urls = [self.__build_request_url()]
-        self.logger.info(f"Scraping version {fifa_version}")
 
     def __build_request_url(self) -> str:
         return f"{PLAYERS_BASE_URL}&r={self.fifa_version}&set=true"
@@ -23,6 +22,8 @@ class SofifaSpider(scrapy.Spider):
     def start_requests(self):
         request = scrapy.Request(self.start_urls[0])
         request.cookies["r"] = self.fifa_version
+#        request.meta["proxy"] = "http://172.16.1.5:8118"
+        self.logger.info(f"Scraping version {self.fifa_version}")
         yield request
 
     def parse(self, response):
@@ -83,8 +84,12 @@ class SofifaSpider(scrapy.Spider):
         if team_url in self.teams_cache.keys():
             return self.teams_cache[team_url]
 
-        cookies = {"r": self.fifa_version}
         settings = get_project_settings()
+        cookies = {"r": self.fifa_version}
+        proxies = {
+            "http": settings.get('HTTP_PROXY'),
+            "https": settings.get('HTTPS_PROXY')
+            }
         headers = {
             "User-Agent": settings.get('USER_AGENT')
         }
@@ -93,6 +98,7 @@ class SofifaSpider(scrapy.Spider):
             SITE_BASE_URL + team_url + "?r=" + self.fifa_version,
             cookies=cookies,
             headers=headers,
+#            proxies=proxies
         )
 
         resp = scrapy.Selector(req)
@@ -105,8 +111,12 @@ class SofifaSpider(scrapy.Spider):
     
     def parse_player_details(self, player_url):
 
-        cookies = {"r": self.fifa_version}
         settings = get_project_settings()
+        cookies = {"r": self.fifa_version}
+        proxies = {
+            "http": settings.get('HTTP_PROXY'),
+            "https": settings.get('HTTPS_PROXY')
+            }
         headers = {
             "User-Agent": settings.get('USER_AGENT')
         }
@@ -115,6 +125,7 @@ class SofifaSpider(scrapy.Spider):
             SITE_BASE_URL + player_url,
             cookies=cookies,
             headers=headers,
+ #           proxies=proxies
         )
 
         resp = scrapy.Selector(req)
