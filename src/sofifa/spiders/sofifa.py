@@ -20,9 +20,10 @@ class SofifaSpider(scrapy.Spider):
         return f"{PLAYERS_BASE_URL}&r={self.fifa_version}&set=true"
 
     def start_requests(self):
+        settings = get_project_settings()
         request = scrapy.Request(self.start_urls[0])
         request.cookies["r"] = self.fifa_version
-#        request.meta["proxy"] = "http://172.16.1.5:8118"
+        request.meta["proxy"] = settings.get("HTTPS_PROXY")
         self.logger.info(f"Scraping version {self.fifa_version}")
         yield request
 
@@ -98,7 +99,7 @@ class SofifaSpider(scrapy.Spider):
             SITE_BASE_URL + team_url + "?r=" + self.fifa_version,
             cookies=cookies,
             headers=headers,
-#            proxies=proxies
+            proxies=proxies
         )
 
         resp = scrapy.Selector(req)
@@ -125,7 +126,7 @@ class SofifaSpider(scrapy.Spider):
             SITE_BASE_URL + player_url,
             cookies=cookies,
             headers=headers,
- #           proxies=proxies
+            proxies=proxies
         )
 
         resp = scrapy.Selector(req)
