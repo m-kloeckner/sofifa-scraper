@@ -132,7 +132,7 @@ class SofifaSpider(scrapy.Spider):
         resp = scrapy.Selector(req)
 
         # get player profile json
-        player_profile = json.loads(resp.xpath('//head/script[contains(text(), "birthDate")]/text()').get())
+        player_profile = json.loads(resp.xpath('//head/script[contains(text(), "birthDate")]/text()').get(), strict=False)
         player_details = {
             "given_name": player_profile['givenName'],
             "family_name": player_profile['familyName'],
